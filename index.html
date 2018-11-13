@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>cup cake</title>
+</head>
+<body>
+<canvas id="ctx" width="500" height="500" style="border: 1px solid lightblue"/>
+
+
+<script type="text/javascript">
+	var ctx = document.getElementById("ctx").getContext("2d");
+	var WIDHT = 500;
+	var HEIGHT = 500;
+
+	var background = new Image();
+	var tile = new Image();
+	var food = new Image();
+	var catcherOne = new Image();
+	var catcherTwo = new Image();
+	var catcherThree = new Image();
+	var catcherFour = new Image();
+	var blood = new Image();
+
+	var thisInterval, score, health, tileList, foodList,animation,foodTimer,level,gameover,pause;
+
+	catcher = {
+		width:70,
+		height:70,
+		x:250,
+		y:297,
+		pressRight:false,
+		pressLeft:false,
+		jump : 0,
+		jumpSpd:6,
+		spd:0,
+		onair:false,
+		gravity:10,
+		safe:true
+	}
+
+	tileObject = {
+		width:50,
+		height:30,
+		y:370
+	}
+
+	foodObject = {
+		width:50,
+		height:50,
+		spd:5,
+		y:0
+
+	}
+
+		background.onload = function(){
+			tile.onload = function(){
+				food.onload = function(){
+					catcherOne.onload = function(){
+						catcherTwo.onload = function(){
+							catcherThree.onload = function(){
+								catcherFour.onload = function(){
+
+										begin = function(){
+											ctx.drawImage(background,0,0,WIDHT,HEIGHT);
+										ctx.strokeStyle = "black";
+											ctx.font = "50px calibri";
+										ctx.strokeText("Click to start game",80,250);
+										// beginingSound.play();
+										}
+
+										document.onkeydown = function(event){
+											if(event.keyCode == 37){
+													pressLeft = true;
+													pressRight = false;
+													catcher.spd = -4;
+											}
+											if(event.keyCode == 39){
+													pressLeft = false;
+													pressRight = true;
+													catcher.spd = 4;
+											}
+											if(event.keyCode ==38 && !catcher.onair && catcher.y == 303){
+													catcher.onair = true;
+													catcher.jump = 100;
+											}
+
+											if(event.keyCode == 32 || event.keyCode ==80){
+												if(pause){
+													pause = false;
+												}else{
+													pause = true;
+												}
+											}
+										}
+
+										document.onkeyup = function(event){
+											if(event.keyCode == 37){
+													pressLeft = false;
+											}
+											if(event.keyCode == 39){
+													pressRight = false;
+											}
+
+										}
+
+										drawObject = function(object,x,y,width,height){
+												ctx.drawImage(object,x,y,width,height);
+										}
+
+										document.getElementById("ctx").onmousedown = function(){
+											if(!gameover){
+												clearInterval(thisInterval);
+											}
+											startGame();
+
+										}
+
+										gameOver = function(){
+											ctx.save();
+											ctx.globalAlpha = 0.6;
+											ctx.fillRect(100,100,300,300);
+											ctx.globalAlpha = 1.0;
+											ctx.strokeStyle = "#ffffff";
+											ctx.font = "30px calibri";
+											ctx.strokeText("Game over",180,200);
+											ctx.strokeText("Click to restart",150,150);
+											ctx.restore();
+											clearInterval(thisInterval);
+										}
+
+										paused = function(){
+											ctx.save();
+											ctx.globalAlpha = 0.6;
+											ctx.fillRect(100,100,300,300);
+											ctx.globalAlpha = 1.0;
+											ctx.strokeStyle = "#ffffff";
+											ctx.font = "30px calibri";
+											ctx.strokeText("Game Paused",170,200);
+											ctx.restore();
+										}
+
+										updateCatcherPossition = function(){
+											
+												if(pressLeft && catcher.x >0 -15 && !gameover){
+													drawObject(catcherThree,catcher.x,catcher.y,catcher.width,catcher.height);
+													catcher.x += catcher.spd;
+												}
+
+												if(pressRight && catcher.x <WIDHT - catcher.width + 20 && !gameover){
+													drawObject(catcherTwo,catcher.x,catcher.y,catcher.width,catcher.height);
+														catcher.x += catcher.spd;
+												}
+
+												if(catcher.y > WIDHT - catcher.height){
+													catcher.y = WIDHT - catcher.height;
+													gameover = true;
+												}
+										}
+
+										updateFoodPossition = function(){
+											for (var i in foodList){
+													drawObject(food,foodList[i].x,foodList[i].y,foodObject.width,foodObject.height);
+												if(foodList[i].y <= HEIGHT){
+												foodList[i].y += foodObject.spd;
+											}else if(foodList[i].y+ foodList[i].height > HEIGHT){
+												foodList.splice(i,1);
+											}
+
+											 if(food_collisiion_catcher(foodList[i])){
+											 	eatingSound.play();
+											 	score++;
+											 	if(score % 2 ==0){
+											 		level--;								 	}
+											 	foodList.splice(i,1);
+											 }
+											}
+											
+										}
+
+										jump = function(){
+											if(catcher.onair && catcher.jump > 0){
+												catcher.y -= catcher.jumpSpd;
+												catcher.jump -= catcher.jumpSpd;
+											}
+											if(catcher.jump <= 0 && catcher.onair && catcher.jump > -100){
+												catcher.y += catcher.jumpSpd;
+												catcher.jump -= catcher.jumpSpd;
+											}
+
+											if(catcher.jump <= -100 && catcher.onair){
+												catcher.onair = false;
+
+											}
+										}
+
+										food_collisiion_catcher = function(f){
+											return((catcher.x < f.x + foodObject.width-25)&&
+												(f.x < catcher.x + catcher.width -25)&&
+												(catcher.y < f.y + foodObject.height -15)&&
+												(f.y < catcher.y + catcher.height-15));
+										}
+
+										food_collisiion_tile = function(t,f){
+											return((t.x < f.x + foodObject.width)&&
+												(f.x < t.x + tileObject.width)&&
+												(t.y < f.y + foodObject.height)&&
+												(f.y < t.y + tileObject.height));
+										}
+
+										catcher_collisiion_tile = function(t){
+											return ((catcher.x <= t.x + tileObject.width -18)&&
+												(t.x <=  catcher.x + catcher.width -16)&&
+												(catcher.y + catcher.height <= t.y+3));
+										}
+
+										sound = function(src){
+											this.sound = document.createElement("audio");
+											this.sound.src = src;
+											this.sound.setAttribute("preload","auto");
+											this.sound.setAttribute("controls","none");
+											this.sound.style.display = "none";
+											document.body.appendChild(this.sound);
+
+											this.play = function(){
+												this.sound.play();
+											}
+
+											this.pause = function(){
+												this.sound.pause();
+											}
+										}
+
+										var eatingSound = new sound("silent-gun.wav");
+										var beginingSound = new sound("wind-gust-2.wav");
+										var gameoverSound = new sound("kid-stumble.wav");
+										update = function(){
+											if(!pause){
+											ctx.clearRect(0,0,WIDHT,HEIGHT);
+												drawObject(background,0,0,WIDHT,HEIGHT);
+											
+													foodTimer++;
+													if(foodTimer == level){
+														foodX = foodDrop[Math.round(Math.random()*9)];
+														foodList.push({x:foodX,y:foodObject.y});
+														foodTimer = 0;
+													}
+
+													for (var i = 0; i < tileList.length; i++) {
+													drawObject(tile,tileList[i].x,tileList[i].y,tileObject.width,tileObject.height);
+												}
+													
+														for (var i in tileList){
+															for(var j in foodList){
+																if(food_collisiion_tile(tileList[i],foodList[j])){
+																	tileList.splice(i,1);
+															}
+														}
+													}
+													
+													// if(animation == 0){
+													// 	// drawObject(catcherOne,catcher.x,catcher.y,catcher.width,catcher.height);
+													// 	animation = 1;
+													// }else{
+													// 	// drawObject(catcherOne,catcher.x,catcher.y,catcher.width,catcher.height);
+													// 	animation = 0;
+													// }
+													 if(gameover){
+														gameoverSound.play();
+													drawObject(catcherFour,catcher.x,catcher.y,catcher.width,catcher.height);
+													gameOver();
+
+													}else if(!catcher.onair){
+														drawObject(catcherOne,catcher.x,catcher.y,catcher.width,catcher.height);
+													for (var i in tileList){
+															if(catcher_collisiion_tile(tileList[i])){
+																catcher.safe = true;
+																break;
+														}else{
+															catcher.safe = false;
+														}
+														}
+														if(!catcher.safe){
+															catcher.y += catcher.gravity;
+														
+													}
+													}else if(catcher.onair){
+														drawObject(catcherTwo,catcher.x,catcher.y,catcher.width,catcher.height);
+													}
+														drawObject(food,440,10,20,20);
+														ctx.save();
+														ctx.fillStyle = "black";
+														ctx.font="20px calibri";
+														ctx.fillText(score,465,27);
+														ctx.fillText("Level: " + (100-level+1),10,27);
+														ctx.restore();
+														jump();
+													updateCatcherPossition();
+													updateFoodPossition();
+											}else{
+												paused();
+											}
+										}
+
+										startGame = function(){
+												foodList = [];
+												tileList = [];
+												score = 0;
+													catcher.x = 250;
+													catcher.y = 303;
+													catcher.onair = false;
+													pressLeft = false;
+													pressRight = false;
+													animation = 0;
+													foodTimer = 0;
+													foodDrop = [];
+													level = 100;
+													gameover = false;
+													pause = false
+
+													for (var i = 0; i <= 9; i++) {
+														foodDrop.push(i*50);
+													}
+
+													for (var i = 0; i <= 9; i++) {	
+														var tileX = i *50;
+													tileList.push({x:tileX,y:tileObject.y});		
+												}
+
+											thisInterval = setInterval(update,10);
+
+										}
+										begin();
+								}
+								catcherFour.src = "im/Dead (10).png";
+							}
+							catcherThree.src = "im/Walkleft (3).png";
+						}
+						catcherTwo.src ="im/Walk (3).png";
+					}
+					catcherOne.src = "im/Idle (1).png"; 
+				}
+				food.src = "im/Mushroom_2.png";
+			}
+			tile.src= "im/Crate.png";
+		}
+		background.src = "im/BG.png";
+</script>
